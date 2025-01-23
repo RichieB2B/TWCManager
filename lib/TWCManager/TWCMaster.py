@@ -28,6 +28,8 @@ class TWCMaster:
     consumptionAmpsValues = {}
     debugOutputToFile = False
     generationValues = {}
+    maxAmpsForTargetGridUsage = 0
+    lastMaxAmpsForTargetGridUsage = 0
     lastkWhMessage = time.time()
     lastkWhPoll = 0
     lastSaveFailed = 0
@@ -650,6 +652,15 @@ class TWCMaster:
         return self.overrideMasterHeartbeatData
 
     def getMaxAmpsForTargetGridUsage(self, targetW=0):
+        now = time.time()
+
+        # Only recalculate once every 30 seconds to allow things to settle
+        if now - self.lastMaxAmpsForTargetGridUsage < 30:
+            logger.debug(
+                f"getMaxAmpsForTargetGridUsage returns cashed value {self.maxAmpsForTargetGridUsage}"
+            )
+            return self.maxAmpsForTargetGridUsage
+
         # Calculate our current generation and consumption in watts
         generationW = float(self.getGeneration())
         consumptionW = float(self.getConsumption())
@@ -695,7 +706,10 @@ class TWCMaster:
         amps = max(
             min(newOffer, availableAmps / self.getRealPowerFactor(availableAmps)), 0
         )
-        return round(amps, 2)
+        # Save value and timestamp for caching
+        self.maxAmpsForTargetGridUsage = round(amps, 2)
+        self.lastMaxAmpsForTargetGridUsage = now
+        return self.maxAmpsForTargetGridUsage
 
     def getNormalChargeLimit(self, ID):
         if "chargeLimits" in self.settings and str(ID) in self.settings["chargeLimits"]:
