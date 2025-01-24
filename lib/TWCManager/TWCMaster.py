@@ -657,6 +657,11 @@ class TWCMaster:
             consumptionA = float(self.convertWattsToAmps(self.getConsumption()))
         availableA = generationA + targetA - consumptionA
 
+        logger.log(
+            logging.INFO8,
+            f"availableA = {availableA:.1f}, consumptionA = {consumptionA:.1f}, generationA = {generationA:.1f}",
+        )
+
         # Calculate what we should offer to match the target (0 for green)
         #
         # The current offered shouldn't increase more than / must
@@ -668,6 +673,11 @@ class TWCMaster:
             self.num_cars_charging_now() * self.config["config"]["minAmpsPerTWC"],
         )
         newOffer = currentOffer + availableA
+
+        logger.log(
+            logging.INFO8,
+            f"currentOffer = {currentOffer:.1f}, newOffer = {newOffer:.1f}",
+        )
 
         # This is the *de novo* calculation of how much we can offer
         generationOffsetA = self.convertWattsToAmps(self.getGenerationOffset())
